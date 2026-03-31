@@ -6,6 +6,11 @@ Dashboard de taxas de juros — Crédito Consignado.
 import json, urllib.request, urllib.parse, sys
 from datetime import datetime, timedelta
 from collections import defaultdict
+import os as _os
+
+# Load JS dashboard code from sibling file
+_JS_PATH = _os.path.join(_os.path.dirname(_os.path.abspath(__file__)), "dashboard.js")
+JS_CODE = open(_JS_PATH, encoding="utf-8").read()
 
 # ── Configurações ─────────────────────────────────────────────────────────────
 
