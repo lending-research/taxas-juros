@@ -11,7 +11,7 @@ import sys
 
 # ── Configurações ────────────────────────────────────────────────────────────
 
-MODALIDADE = "Cr" + "\u00e9" + "dito pessoal consignado p" + "\u00fa" + "blico - Prefixado"
+MODALIDADE = "Cr\xe9dito pessoal consignado p\xfablico - Prefixado"
 SEGMENTO   = "Pessoa Física"
 
 INSTITUICOES = {
