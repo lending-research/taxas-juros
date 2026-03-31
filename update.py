@@ -61,16 +61,6 @@ def fetch_bacen(data_inicio: str, data_fim: str) -> list:
     if all_records:
         print(f"  Exemplo de registro: {all_records[0]}")
 
-    # Debug: mostra modalidades únicas de Pessoa Física presentes nos dados
-    pf_records = [r for r in all_records if "SICA" in r.get("Segmento", "")]
-    modalidades_pf = set(r.get("Modalidade","") for r in pf_records)
-    print(f"  Modalidades PF encontradas ({len(modalidades_pf)}):")
-    for m in sorted(modalidades_pf):
-        if "consignado" in m.lower():
-            print(f"    >> {repr(m)}")
-    print(f"  MODALIDADE buscada: {repr(MODALIDADE)}")
-    print(f"  SEGMENTO buscado:   {repr(SEGMENTO)}")
-
     filtered = [
         r for r in all_records
         if r.get("Modalidade", "") == MODALIDADE
