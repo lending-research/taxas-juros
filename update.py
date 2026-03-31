@@ -63,8 +63,9 @@ def fetch_bacen(data_inicio: str, data_fim: str) -> list:
 
     filtered = [
         r for r in all_records
-        if r.get("Modalidade", "") == MODALIDADE
-        and r.get("Segmento", "") == SEGMENTO
+        if "consignado p" in r.get("Modalidade", "").lower()
+        and "Prefixado" in r.get("Modalidade", "")
+        and "SICA" in r.get("Segmento", "")
     ]
     print(f"  Após filtro: {len(filtered)}")
     return filtered
