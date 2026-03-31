@@ -485,12 +485,16 @@ function buildInsight(key, period) {{
   const cx = avg(m.raw['Caixa'], idxs);
   const el = document.getElementById('insight-'+key);
   if (!el || nu==null) return;
-  const ranked = m.banks.map(b=>({...b,a:avg(m.raw[b.key],idxs)})).filter(b=>b.a!=null).sort((a,b)=>a.a-b.a);
-  const nuPos = ranked.findIndex(b=>b.isNubank)+1;
-  const ahead = ranked.filter((b,i)=>i<nuPos-1).map(b=>b.key).join(', ');
-  el.innerHTML = `<strong>${{m.label}} · ${{m.periods[period].label}}:</strong> Nubank em <strong>#${{nuPos}}º lugar</strong> com média de <strong>${{nu.toFixed(2)}}% a.m.</strong>${{ahead?` À sua frente: ${{ahead}}.`:''}}${{cx?` Caixa cobra ${{(cx-nu).toFixed(2)}} p.p. a mais.`:''}}${{bb?` Banco do Brasil cobra ${{(bb-nu).toFixed(2)}} p.p. a mais (~${{(toAnn(bb)-toAnn(nu)).toFixed(1)}} p.p. ao ano).`:''}}`;
+  const rankedAll = m.banks.map(function(b) {{ return {{key:b.key,isNubank:b.isNubank,ahead:b.ahead,a:avg(m.raw[b.key],idxs)}}; }});
+  const ranked2 = rankedAll.filter(function(b){{return b.a!=null;}}).sort(function(a,b){{return a.a-b.a;}});
+  const nuPos = ranked2.findIndex(function(b){{return b.isNubank;}})+1;
+  const ahead = ranked2.filter(function(b,i){{return i<nuPos-1;}}).map(function(b){{return b.key;}}).join(', ');
+  let txt = '<strong>'+m.label+' · '+m.periods[period].label+':</strong> Nubank em <strong>#'+nuPos+'ºlugar</strong> com média de <strong>'+nu.toFixed(2)+'% a.m.</strong>';
+  if(ahead) txt += ' À sua frente: '+ahead+'.';
+  if(cx) txt += ' Caixa cobra '+(cx-nu).toFixed(2)+' p.p. a mais.';
+  if(bb) txt += ' Banco do Brasil cobra '+(bb-nu).toFixed(2)+' p.p. a mais (~'+(toAnn(bb)-toAnn(nu)).toFixed(1)+' p.p. ao ano).';
+  el.innerHTML = txt;
 }}
-
 const panelPeriods = {{}};
 function getCurrentPeriod(key) {{
   return panelPeriods[key] || MODALS[key]?.defaultPeriod;
