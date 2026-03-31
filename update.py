@@ -448,7 +448,7 @@ function buildPubInsight(period) {{
 function buildMonthly(key, data, period) {{
   const panel = document.getElementById('p-'+key);
   const label = key=='inss'?'Consignado INSS':'Consignado Privado';
-  const periodData = data.ranked[period] || {rows:[], nuPos:null, totalPlayers:0};
+  const periodData = data.ranked[period] || {{rows:[], nuPos:null, totalPlayers:0}};
   const ranked = periodData.rows || [];
   const nuRow = ranked.find(r=>r.isNubank);
   const nuRate = nuRow ? nuRow.rate : null;
