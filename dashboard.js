@@ -22,7 +22,7 @@ function renderPubMetrics(period){
 
 function renderPubRanking(period){
   var m=PUBLICO,idxs=m.periods[period].idx;
-  var ranked=m.banks.map(function(b){return{key:b.key,color:b.color,isNubank:b.isNubank,ahead:b.ahead,avg:avg(m.raw[b.key],idxs)};}).filter(function(b){return b.avg!=null;}).sort(function(a,b){return a.avg-b.avg;});
+  var ranked=m.banks.map(function(b){return{key:b.key,color:b.color,isNubank:b.isNubank,ahead:b.ahead,categoria:b.categoria,avg:avg(m.raw[b.key],idxs)};}).filter(function(b){return b.avg!=null;}).sort(function(a,b){return a.avg-b.avg;});
   var mn=ranked[0].avg,mx=ranked[ranked.length-1].avg,rng=mx-mn;
   var nuPos=ranked.findIndex(function(b){return b.isNubank;})+1;
   var ahead=ranked.filter(function(b,i){return i<nuPos-1;}).map(function(b){return b.key;}).join(', ');
