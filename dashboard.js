@@ -1,24 +1,16 @@
 function filterRanking(inputEl,listId){
-  var q=inputEl.value.toLowerCase();
-  var rows=document.querySelectorAll('#'+listId+' .bar-row');
-  rows.forEach(function(row){
-    var name=(row.getAttribute('data-name')||'').toLowerCase();
+  var q=inputEl.value.toLowerCase().trim();
+  var container=document.getElementById(listId);
+  if(!container) return;
+  container.querySelectorAll('.bar-row').forEach(function(row){
+    if(row.hasAttribute('data-nu')){row.style.display='';return;}
+    var el=row.querySelector('.bar-name');
+    var name=el?(el.textContent||'').toLowerCase():'';
     row.style.display=(!q||name.indexOf(q)>=0)?'':'none';
   });
 }
 function searchBox(listId){
-  return '<div style="margin-bottom:10px"><input type="text" placeholder="Buscar banco..." oninput="filterRanking(this,\''+listId+'\')" style="width:100%;padding:6px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;font-family:DM Sans,sans-serif;background:var(--surface2);color:var(--text);outline:none" /></div>';
-}
-function filterRanking(inputEl,listId){
-  var q=inputEl.value.toLowerCase();
-  var rows=document.querySelectorAll('#'+listId+' .bar-row');
-  rows.forEach(function(row){
-    var name=(row.getAttribute('data-name')||'').toLowerCase();
-    row.style.display=(!q||name.indexOf(q)>=0)?'':'none';
-  });
-}
-function searchBox(listId){
-  return '<div style="margin-bottom:10px"><input type="text" placeholder="Buscar banco..." oninput="filterRanking(this,\''+listId+'\')" style="width:100%;padding:6px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;font-family:DM Sans,sans-serif;background:var(--surface2);color:var(--text);outline:none" /></div>';
+  return '<div style="margin-bottom:12px"><input type="text" placeholder="Buscar banco..." oninput="filterRanking(this,\''+listId+'\')" style="width:100%;padding:7px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;font-family:DM Sans,sans-serif;background:var(--surface2);color:var(--text);outline:none" /></div>';
 }
 function getBadge(cat){
   if(cat=='tradicional') return '<span class="bar-badge-pill b-trad">tradicional</span>';
@@ -51,7 +43,7 @@ function renderPubRanking(period){
   var rows=ranked.map(function(b,i){
     var pct=rng>0?(b.avg-mn)/rng:0,bw=Math.round(10+pct*88);
     var pill=b.isNubank?'<span class="bar-badge-pill b-nu">Nubank \u2605</span>':getBadge(b.categoria);
-    return'<div class="bar-row'+(b.isNubank?' nu-highlight':'')+'"><span class="bar-pos">#'+(i+1)+'</span><span class="bar-badge">'+pill+'</span><span class="bar-name'+(b.isNubank?' nu':'')+'">'+b.key+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bw+'%;background:'+b.color+(b.isNubank?'':'99')+'"></div></div><span class="bar-val">'+b.avg.toFixed(2)+'%</span><span class="bar-ano">'+toAnn(b.avg).toFixed(1)+'% a.a.</span></div>';
+    return'<div class="bar-row'+(b.isNubank?' nu-highlight':'')+'" '+(b.isNubank?' data-nu="1" ':'')+' data-name="'+b.key.toLowerCase()+'">'+'<span class="bar-pos">#'+(i+1)+'</span><span class="bar-badge">'+pill+'</span><span class="bar-name'+(b.isNubank?' nu':'')+'">'+b.key+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bw+'%;background:'+b.color+(b.isNubank?'':'99')+'"></div></div><span class="bar-val">'+b.avg.toFixed(2)+'%</span><span class="bar-ano">'+toAnn(b.avg).toFixed(1)+'% a.a.</span></div>';
   }).join('');
   var nu=avg(m.raw['Nubank'],idxs),bb=avg(m.raw['Banco do Brasil'],idxs),cx=avg(m.raw['Caixa'],idxs);
   var ins='<strong>'+m.periods[period].label+':</strong> Nubank em <strong>#'+nuPos+'\u00balugar</strong> com m\u00e9dia de <strong>'+nu.toFixed(2)+'% a.m.</strong>';
@@ -106,7 +98,7 @@ function buildMonthly(key,data,period){
   var barRows=rows.map(function(r){
     var pct=rng>0?(r.rate-mn)/rng:0,bw=Math.round(10+pct*88);
     var pill=r.isNubank?'<span class="bar-badge-pill b-nu">Nubank \u2605</span>':getBadge(r.categoria);
-    return'<div class="bar-row'+(r.isNubank?' nu-highlight':'')+'" data-name="'+r.name.toLowerCase()+'"><span class="bar-pos">#'+r.pos+'</span><span class="bar-badge">'+pill+'</span><span class="bar-name'+(r.isNubank?' nu':'')+'">'+r.name+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bw+'%;background:'+r.color+(r.isNubank?'':'99')+'"></div></div><span class="bar-val">'+r.rate.toFixed(2)+'%</span><span class="bar-ano">'+toAnn(r.rate).toFixed(1)+'% a.a.</span></div>';
+    return'<div class="bar-row'+(r.isNubank?' nu-highlight':'')+'" '+(r.isNubank?' data-nu="1" ':'')+' data-name="'+r.name.toLowerCase()+'">'<span class="bar-pos">#'+r.pos+'</span><span class="bar-badge">'+pill+'</span><span class="bar-name'+(r.isNubank?' nu':'')+'">'+r.name+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bw+'%;background:'+r.color+(r.isNubank?'':'99')+'"></div></div><span class="bar-val">'+r.rate.toFixed(2)+'%</span><span class="bar-ano">'+toAnn(r.rate).toFixed(1)+'% a.a.</span></div>';
   }).join('');
   var ahead=rows.filter(function(r){return r.ahead;}).map(function(r){return r.name;}).join(', ');
   var bbRow=rows.find(function(r){return r.name=='Banco do Brasil';});
