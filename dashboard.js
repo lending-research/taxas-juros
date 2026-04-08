@@ -28,7 +28,7 @@ function renderPubRanking(period){
   var ahead=ranked.filter(function(b,i){return i<nuPos-1;}).map(function(b){return b.key;}).join(', ');
   var rows=ranked.map(function(b,i){
     var pct=rng>0?(b.avg-mn)/rng:0,bw=Math.round(10+pct*88);
-    var pill=b.isNubank?'<span class="bar-badge-pill b-nu">Nubank \u2605</span>':b.ahead?'<span class="bar-badge-pill b-ahead">\u00e0 frente</span>':getBadge(b.categoria);
+    var pill=b.isNubank?'<span class="bar-badge-pill b-nu">Nubank \u2605</span>':getBadge(b.categoria);
     return'<div class="bar-row'+(b.isNubank?' nu-highlight':'')+'"><span class="bar-pos">#'+(i+1)+'</span><span class="bar-badge">'+pill+'</span><span class="bar-name'+(b.isNubank?' nu':'')+'">'+b.key+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bw+'%;background:'+b.color+(b.isNubank?'':'99')+'"></div></div><span class="bar-val">'+b.avg.toFixed(2)+'%</span><span class="bar-ano">'+toAnn(b.avg).toFixed(1)+'% a.a.</span></div>';
   }).join('');
   var nu=avg(m.raw['Nubank'],idxs),bb=avg(m.raw['Banco do Brasil'],idxs),cx=avg(m.raw['Caixa'],idxs);
@@ -82,7 +82,7 @@ function buildMonthly(key,data,period){
   var mn=rows.length?rows[0].rate:0,mx=rows.length?rows[rows.length-1].rate:0,rng=mx-mn;
   var barRows=rows.map(function(r){
     var pct=rng>0?(r.rate-mn)/rng:0,bw=Math.round(10+pct*88);
-    var pill=r.isNubank?'<span class="bar-badge-pill b-nu">Nubank \u2605</span>':r.ahead?'<span class="bar-badge-pill b-ahead">\u00e0 frente</span>':getBadge(r.categoria);
+    var pill=r.isNubank?'<span class="bar-badge-pill b-nu">Nubank \u2605</span>':getBadge(r.categoria);
     return'<div class="bar-row'+(r.isNubank?' nu-highlight':'')+'"><span class="bar-pos">#'+r.pos+'</span><span class="bar-badge">'+pill+'</span><span class="bar-name'+(r.isNubank?' nu':'')+'">'+r.name+'</span><div class="bar-track"><div class="bar-fill" style="width:'+bw+'%;background:'+r.color+(r.isNubank?'':'99')+'"></div></div><span class="bar-val">'+r.rate.toFixed(2)+'%</span><span class="bar-ano">'+toAnn(r.rate).toFixed(1)+'% a.a.</span></div>';
   }).join('');
   var ahead=rows.filter(function(r){return r.ahead;}).map(function(r){return r.name;}).join(', ');
