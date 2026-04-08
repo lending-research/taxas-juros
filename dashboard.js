@@ -92,12 +92,32 @@ function buildMonthly(key,data,period){
   document.querySelectorAll('#ptabs-'+key+' .ptab').forEach(function(t){t.classList.remove('active');});
   var tab=document.querySelector('#ptabs-'+key+' [data-period="'+period+'"]');
   if(tab)tab.classList.add('active');
+  buildMonthlyChart(key,data,period);
+}
+
+function buildMonthlyChart(key,data,period){
+  if(!data.dates||!data.raw) return;
+  var canvasEl=document.getElementById('chart-'+key);
+  if(!canvasEl) return;
+  var idxs=data.periods[period].idx;
+  var cb=data.chart_banks||data.banks||[];
+  var ctx=canvasEl.getContext('2d');
+  if(charts[key]) charts[key].destroy();
+  charts[key]=new Chart(ctx,{type:'line',data:{labels:idxs.map(function(i){return data.dates[i].slice(5);}),datasets:cb.map(function(b){return{label:b.key,data:idxs.map(function(i){return data.raw[b.key]?data.raw[b.key][i]:null;}),borderColor:b.color,backgroundColor:b.color+'18',borderWidth:b.isNubank?2.5:1.5,pointRadius:b.isNubank?4:3,pointBackgroundColor:b.color,tension:.3,fill:false,spanGaps:true};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return' '+c.dataset.label+': '+(c.parsed.y!=null?c.parsed.y.toFixed(2)+'% a.m.':'--');}}}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10,family:'DM Mono'},color:'#9a9a94',maxTicksLimit:15}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10,family:'DM Mono'},color:'#9a9a94',callback:function(v){return v.toFixed(2)+'%';}}}}}});
 }
 
 function initMonthly(key,data){
   var label=key=='inss'?'Consignado INSS':'Consignado Privado';
+  var cb=data.chart_banks||data.banks||[];
+  var legend=cb.map(function(b){return'<span class="li"><span class="ld" style="background:'+b.color+'"></span>'+b.key+'</span>';}).join('');
   var ptabs=Object.entries(data.periods).map(function(e){var pk=e[0],pv=e[1];return'<button class="ptab" data-period="'+pk+'" onclick="buildMonthly(\''+key+'\','+key.toUpperCase()+',\''+pk+'\')">'+pv.label+'</button>';}).join('');
-  document.getElementById('p-'+key).innerHTML='<div class="hero"><h2>Onde o Nubank se posiciona no '+label.toLowerCase()+'?</h2><p>Dados do Bacen \u00b7 Prefixado \u00b7 Pessoa F\u00edsica</p></div><div class="ptabs" id="ptabs-'+key+'">'+ptabs+'</div><div class="mgrid" id="metrics-'+key+'"></div><div class="card"><div class="ct">Ranking de taxas</div><div class="cs" id="rank-sub-'+key+'"></div><div id="bars-'+key+'"></div></div><div class="insight" id="ins-'+key+'"></div>';
+  document.getElementById('p-'+key).innerHTML=
+    '<div class="hero"><h2>Onde o Nubank se posiciona no '+label.toLowerCase()+'?</h2><p>Dados do Bacen \u00b7 Prefixado \u00b7 Pessoa F\u00edsica</p></div>'+
+    '<div class="ptabs" id="ptabs-'+key+'">'+ptabs+'</div>'+
+    '<div class="mgrid" id="metrics-'+key+'"></div>'+
+    '<div class="card"><div class="ct">Evolu\u00e7\u00e3o da taxa ao m\u00eas</div><div class="cs">Nubank + players mais pr\u00f3ximos \u00b7 menor taxa = mais competitivo</div><div class="legend">'+legend+'</div><div class="cw"><canvas id="chart-'+key+'"></canvas></div></div>'+
+    '<div class="card"><div class="ct">Ranking completo</div><div class="cs" id="rank-sub-'+key+'"></div><div id="bars-'+key+'"></div></div>'+
+    '<div class="insight" id="ins-'+key+'"></div>';
   buildMonthly(key,data,data.defaultPeriod);
 }
 
