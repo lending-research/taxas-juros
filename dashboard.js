@@ -47,14 +47,15 @@ function buildPublico(period){
 
 function buildPubChart(period){
   var m=PUBLICO,idxs=m.periods[period].idx;
+  var cb=m.chart_banks||m.banks;
   var ctx=document.getElementById('chart-pub').getContext('2d');
   if(charts.pub)charts.pub.destroy();
-  charts.pub=new Chart(ctx,{type:'line',data:{labels:idxs.map(function(i){return m.dates[i].slice(5);}),datasets:m.banks.map(function(b){return{label:b.key,data:idxs.map(function(i){return m.raw[b.key]?m.raw[b.key][i]:null;}),borderColor:b.color,backgroundColor:b.color+'18',borderWidth:b.isNubank?2.5:1.5,pointRadius:b.isNubank?4:2,pointBackgroundColor:b.color,tension:.3,fill:false,spanGaps:true};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return' '+c.dataset.label+': '+(c.parsed.y!=null?c.parsed.y.toFixed(2)+'% a.m.':'--');}}}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10,family:'DM Mono'},color:'#9a9a94',maxTicksLimit:15}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10,family:'DM Mono'},color:'#9a9a94',callback:function(v){return v.toFixed(2)+'%';}}}}}}); 
+  charts.pub=new Chart(ctx,{type:'line',data:{labels:idxs.map(function(i){return m.dates[i].slice(5);}),datasets:cb.map(function(b){return{label:b.key,data:idxs.map(function(i){return m.raw[b.key]?m.raw[b.key][i]:null;}),borderColor:b.color,backgroundColor:b.color+'18',borderWidth:b.isNubank?2.5:1.5,pointRadius:b.isNubank?4:2,pointBackgroundColor:b.color,tension:.3,fill:false,spanGaps:true};})},options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false},plugins:{legend:{display:false},tooltip:{callbacks:{label:function(c){return' '+c.dataset.label+': '+(c.parsed.y!=null?c.parsed.y.toFixed(2)+'% a.m.':'--');}}}},scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10,family:'DM Mono'},color:'#9a9a94',maxTicksLimit:15}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10,family:'DM Mono'},color:'#9a9a94',callback:function(v){return v.toFixed(2)+'%';}}}}}}); 
 }
 
 function initPublico(){
   var m=PUBLICO;
-  var legend=m.banks.map(function(b){return'<span class="li"><span class="ld" style="background:'+b.color+'"></span>'+b.key+'</span>';}).join('');
+  var cb=m.chart_banks||m.banks;var legend=cb.map(function(b){return'<span class="li"><span class="ld" style="background:'+b.color+'"></span>'+b.key+'</span>';}).join('');
   var ptabs=Object.entries(m.periods).map(function(e){var pk=e[0],pv=e[1];return'<button class="ptab" data-period="'+pk+'" onclick="buildPublico(\''+pk+'\')">'+pv.label+'</button>';}).join('');
   document.getElementById('p-publico').innerHTML='<div class="hero"><h2>Onde o Nubank se posiciona no consignado p\u00fablico?</h2><p>Dados di\u00e1rios do Bacen \u00b7 Prefixado \u00b7 Pessoa F\u00edsica</p></div><div class="ptabs" id="ptabs-pub">'+ptabs+'</div><div class="mgrid" id="metrics-pub"></div><div class="card"><div class="ct">Evolu\u00e7\u00e3o di\u00e1ria da taxa ao m\u00eas</div><div class="cs">Todos os players \u00b7 menor taxa = mais competitivo</div><div class="legend">'+legend+'</div><div class="cw"><canvas id="chart-pub"></canvas></div></div><div class="card"><div class="ct">Ranking por taxa m\u00e9dia</div><div class="cs" id="rank-sub-pub"></div><div id="rank-pub"></div></div><div class="insight" id="ins-pub"></div>';
   buildPublico(m.defaultPeriod);
