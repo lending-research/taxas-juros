@@ -4,7 +4,7 @@ function avg(arr,idxs){var v=idxs.map(function(i){return arr[i];}).filter(functi
 
 function renderPubMetrics(period){
   var m=PUBLICO,idxs=m.periods[period].idx,nuA=avg(m.raw['Nubank'],idxs);
-  var trad=['Nubank','Caixa','Ita\u00fa','Banco do Brasil'];
+  var trad=['Nubank','Bradesco','Santander','Caixa','Ita\u00fa','Banco do Brasil'];
   return trad.map(function(name){
     var a=avg(m.raw[name],idxs);if(a==null)return'';
     var diff=name!='Nubank'&&nuA?'+'+(a-nuA).toFixed(2)+' p.p. vs Nu':null;
@@ -64,7 +64,7 @@ function buildMonthly(key,data,period){
   var pd=data.ranked[period]||{rows:[],nuPos:null,totalPlayers:0};
   var rows=pd.rows||[],nuRow=rows.find(function(r){return r.isNubank;}),nuRate=nuRow?nuRow.rate:null;
   var nuGlobalPos=pd.nuPos,totalPlayers=pd.totalPlayers,label=key=='inss'?'Consignado INSS':'Consignado Privado';
-  var always=['Nubank','Caixa','Ita\u00fa','Banco do Brasil'];
+  var always=['Nubank','Bradesco','Santander','Caixa','Ita\u00fa','Banco do Brasil'];
   var cards=always.map(function(name){
     var r=rows.find(function(r){return r.name==name;});if(!r)return'';
     var diff=name!='Nubank'&&nuRate?'+'+(r.rate-nuRate).toFixed(2)+' p.p. vs Nu':null;
