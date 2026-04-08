@@ -264,7 +264,7 @@ def build_series(records, modkey):
             series[name][date] = float(taxa)
     return series
 
-def get_date_range(months_back=2):
+def get_date_range(months_back=4):
     today = datetime.today()
     start = today - timedelta(days=months_back * 31)
     return start.strftime("%Y-%m-%d"), today.strftime("%Y-%m-%d")
