@@ -246,51 +246,79 @@ def build_publico_data(series):
             "periods": periods, "defaultPeriod": default, "avgs": nu_avgs}
 
 def build_monthly_data(series, modkey):
-    """Dados mensais — agrupados por mes (media mensal)."""
+    """Dados com serie temporal diaria + ranking mensal."""
     month_map_short = {"01":"Jan","02":"Fev","03":"Mar","04":"Abr","05":"Mai","06":"Jun",
                        "07":"Jul","08":"Ago","09":"Set","10":"Out","11":"Nov","12":"Dez"}
 
-    # Group all dates by month key "YYYY-MM"
-    month_keys = sorted({d[:7] for s in series.values() for d in s})
+    # All individual dates for time series chart
+    all_dates = sorted({d for s in series.values() for d in s})
+
+    # Month keys for period tabs
+    month_keys = sorted({d[:7] for d in all_dates})
 
     periods = {}
     for mk in month_keys:
         yr, mo = mk[:4], mk[5:7]
-        periods[mk] = {"label": f"{month_map_short[mo]} {yr}"}
-    periods["all"] = {"label": "Média do período"}
+        idxs = [i for i, d in enumerate(all_dates) if d[:7] == mk]
+        periods[mk] = {"label": f"{month_map_short[mo]} {yr}", "idx": idxs}
+    all_idxs = list(range(len(all_dates)))
+    periods["all"] = {"label": "Média do período", "idx": all_idxs}
     default = month_keys[-1] if month_keys else "all"
 
-    inst_map = get_inst_map(modkey)
-    known_names = set(inst_map.values())
-    always_show = {"Nubank", "Caixa", "Itáu", "Banco do Brasil", "Bradesco", "Santander"}
+    # Overall average per institution (for chart_banks selection)
+    overall_avgs = {}
+    for name, dates in series.items():
+        vals = [v for v in dates.values() if v is not None]
+        if vals:
+            overall_avgs[name] = sum(vals) / len(vals)
+    nu_overall = overall_avgs.get("Nubank", 999)
 
+    # Build banks list and raw time series
+    banks = []
+    raw = {}
+    for name in sorted(series.keys(), key=lambda n: (n != "Nubank", n)):
+        vals = [series[name].get(d) for d in all_dates]
+        raw[name] = vals
+        avg_rate = overall_avgs.get(name, 999)
+        banks.append({"key": name, "color": get_color(name), "isNubank": name == "Nubank",
+                      "ahead": avg_rate < nu_overall and name != "Nubank"})
+
+    # chart_banks: Nubank + up to 5 closest ahead, or 5 behind if none ahead
+    sorted_by_avg = sorted(overall_avgs.items(), key=lambda x: x[1])
+    nu_pos = next((i for i, (n, _) in enumerate(sorted_by_avg) if n == "Nubank"), 0)
+    ahead_names = [n for n, _ in sorted_by_avg[:nu_pos]]
+    behind_names = [n for n, _ in sorted_by_avg[nu_pos+1:]]
+    if ahead_names:
+        chart_names = set(ahead_names[-5:] + ["Nubank"])
+    else:
+        chart_names = set(behind_names[:5] + ["Nubank"])
+    chart_banks = [b for b in banks if b["key"] in chart_names]
+
+    # Ranked per period (monthly averages for bar chart)
     ranked_per_period = {}
-    for pk in list(periods.keys()):
+    for pk, pv in periods.items():
+        idxs = pv["idx"]
         all_rows = []
-        for name, dates in series.items():
-            if pk == "all":
-                vals = [v for v in dates.values() if v is not None]
-            else:
-                vals = [v for d, v in dates.items() if d[:7] == pk and v is not None]
+        for name in series:
+            vals = [raw[name][i] for i in idxs if raw[name][i] is not None] if name in raw else []
             if vals:
                 rate = round(sum(vals)/len(vals), 2)
                 all_rows.append({"name": name, "rate": rate,
                                  "color": get_color(name), "isNubank": name == "Nubank"})
-
         all_rows.sort(key=lambda r: r["rate"])
         nu_idx = next((i for i, r in enumerate(all_rows) if r["isNubank"]), None)
-        nu_global_pos = (nu_idx + 1) if nu_idx is not None else None
-        total = len(all_rows)
-
         for i, r in enumerate(all_rows):
             r["pos"] = i + 1
             r["ahead"] = nu_idx is not None and i < nu_idx
+        ranked_per_period[pk] = {
+            "rows": all_rows,
+            "nuPos": (nu_idx + 1) if nu_idx is not None else None,
+            "totalPlayers": len(all_rows)
+        }
 
-        shown = all_rows  # show all institutions
-
-        ranked_per_period[pk] = {"rows": shown, "nuPos": nu_global_pos, "totalPlayers": total}
-
-    return {"type": "monthly", "periods": periods, "defaultPeriod": default,
+    return {"type": "monthly", "dates": all_dates, "raw": raw,
+            "banks": banks, "chart_banks": chart_banks,
+            "periods": periods, "defaultPeriod": default,
             "ranked": ranked_per_period}
 
 def build_html(all_data, generated_at):
