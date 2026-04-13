@@ -129,11 +129,10 @@ function applyLangToStatic() {
 }
 
 function updatePeriodTabLabels() {
-  // Period tabs show month names - only "Média do período" needs translating
-  document.querySelectorAll('.ptab').forEach(function(btn) {
-    if (btn.textContent.indexOf('dia') > -1 || btn.textContent.indexOf('eriod') > -1) {
-      btn.textContent = t('media-periodo');
-    }
+  document.querySelectorAll('.ptab[data-period]').forEach(function(btn) {
+    var orig = btn.getAttribute('data-label') || btn.textContent;
+    btn.setAttribute('data-label', orig);
+    btn.textContent = translatePeriodLabel(orig);
   });
 }
 
@@ -174,12 +173,30 @@ function filterRanking(inputEl,listId){
 function searchBox(listId){
   return '<div style="margin-bottom:12px"><input type="text" placeholder="Buscar banco..." oninput="filterRanking(this,\''+listId+'\')" style="width:100%;padding:7px 14px;border:0.5px solid var(--border2);border-radius:20px;font-size:12px;font-family:DM Sans,sans-serif;background:var(--surface2);color:var(--text);outline:none" /></div>';
 }
+function translatePeriodLabel(label) {
+  if (currentLang === 'pt') return label;
+  var months = {
+    'Jan': 'Jan', 'Fev': 'Feb', 'Mar': 'Mar', 'Abr': 'Apr',
+    'Mai': 'May', 'Jun': 'Jun', 'Jul': 'Jul', 'Ago': 'Aug',
+    'Set': 'Sep', 'Out': 'Oct', 'Nov': 'Nov', 'Dez': 'Dec'
+  };
+  // Replace Portuguese month abbreviation
+  return label.replace(/^(Jan|Fev|Mar|Abr|Mai|Jun|Jul|Ago|Set|Out|Nov|Dez)/, function(m) {
+    return months[m] || m;
+  }).replace('Média do período', t('media-periodo'));
+}
 function getBadge(cat){
-  if(cat=='tradicional') return '<span class="bar-badge-pill b-trad">tradicional</span>';
-  if(cat=='fintech') return '<span class="bar-badge-pill b-fintech">fintech</span>';
-  if(cat=='cooperativa') return '<span class="bar-badge-pill b-coop">cooperativa</span>';
-  if(cat=='financeira') return '<span class="bar-badge-pill b-fin">financeira</span>';
-  return '<span class="bar-badge-pill b-trad">especializado</span>';
+  var labels = {
+    'tradicional': currentLang==='en'?'traditional':'tradicional',
+    'fintech': 'fintech',
+    'cooperativa': currentLang==='en'?'cooperative':'cooperativa',
+    'financeira': currentLang==='en'?'financial':'financeira',
+    'especializado': currentLang==='en'?'specialized':'especializado',
+  };
+  var cls = {'tradicional':'b-trad','fintech':'b-fintech','cooperativa':'b-coop','financeira':'b-fin','especializado':'b-trad'};
+  var label = labels[cat] || cat;
+  var c = cls[cat] || 'b-trad';
+  return '<span class="bar-badge-pill '+c+'">'+label+'</span>';
 }
 const charts={};
 function toAnn(m){return((Math.pow(1+m/100,12)-1)*100);}
@@ -240,7 +257,7 @@ function buildPubChart(period){
 function initPublico(){
   var m=PUBLICO;
   var cb=m.chart_banks||m.banks;var legend=cb.map(function(b){return'<span class="li"><span class="ld" style="background:'+b.color+'"></span>'+b.key+'</span>';}).join('');
-  var ptabs=Object.entries(m.periods).map(function(e){var pk=e[0],pv=e[1];return'<button class="ptab" data-period="'+pk+'" onclick="buildPublico(\''+pk+'\')">'+pv.label+'</button>';}).join('');
+  var ptabs=Object.entries(m.periods).map(function(e){var pk=e[0],pv=e[1];return'<button class="ptab" data-period="'+pk+'" onclick="buildPublico(\''+pk+'\')">'+translatePeriodLabel(pv.label)+'</button>';}).join('');
   document.getElementById('p-publico').innerHTML='<div class="hero"><h2>'+t('hero-pub')+'</h2><p>'+t('hero-pub-sub')+'</p></div><div class="ptabs" id="ptabs-pub">'+ptabs+'</div><div class="mgrid" id="metrics-pub"></div><div class="card"><div class="ct">'+t('chart-title-pub')+'</div><div class="cs">'+t('chart-sub-pub')+'</div><div class="legend">'+legend+'</div><div class="cw"><canvas id="chart-pub"></canvas></div></div><div class="card"><div class="ct">'+t('ranking-title-pub')+'</div><div class="cs" id="rank-sub-pub"></div><div id="rank-pub"></div></div><div class="insight" id="ins-pub"></div>';
   buildPublico(m.defaultPeriod);
 }
@@ -294,7 +311,7 @@ function initMonthly(key,data){
   var label=key=='inss'?'Consignado INSS':'Consignado Privado';
   var cb=data.chart_banks||data.banks||[];
   var legend=cb.map(function(b){return'<span class="li"><span class="ld" style="background:'+b.color+'"></span>'+b.key+'</span>';}).join('');
-  var ptabs=Object.entries(data.periods).map(function(e){var pk=e[0],pv=e[1];return'<button class="ptab" data-period="'+pk+'" onclick="buildMonthly(\''+key+'\','+key.toUpperCase()+',\''+pk+'\')">'+pv.label+'</button>';}).join('');
+  var ptabs=Object.entries(data.periods).map(function(e){var pk=e[0],pv=e[1];return'<button class="ptab" data-period="'+pk+'" onclick="buildMonthly(\''+key+'\','+key.toUpperCase()+',\''+pk+'\')">'+translatePeriodLabel(pv.label)+'</button>';}).join('');
   document.getElementById('p-'+key).innerHTML=
     '<div class="hero"><h2>'+(key==='inss'?t('hero-inss'):t('hero-priv'))+'</h2><p>'+(key==='inss'?t('hero-inss-sub'):t('hero-priv-sub'))+'</p></div>'+
     '<div class="ptabs" id="ptabs-'+key+'">'+ptabs+'</div>'+
