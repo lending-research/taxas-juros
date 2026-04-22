@@ -243,33 +243,41 @@ def fetch_bacen_window(data_inicio, data_fim):
     return records
 
 def fetch_bacen(data_inicio, data_fim):
-    """Busca por dia individual — unica forma de garantir dados de abril sem estourar limite."""
+    """Busca mensal para historico + diaria para mes atual (evita limite 10000)."""
     from datetime import datetime, timedelta
     all_records = []
     start = datetime.strptime(data_inicio, "%Y-%m-%d")
     end   = datetime.strptime(data_fim,   "%Y-%m-%d")
-    # Only fetch days that are likely to have data (Mon-Fri)
-    # Use monthly windows for older data, daily for current month
-    current_month = datetime.today().replace(day=1)
+    today = datetime.today()
+    cur_year  = today.year
+    cur_month = today.month
+
     cursor = start
     while cursor <= end:
-        if cursor >= current_month:
-            # Current month: fetch day by day
-            window_end = cursor
+        is_current_month = (cursor.year == cur_year and cursor.month == cur_month)
+
+        if is_current_month:
+            # Fetch one day at a time — ~200 records/day, well under 10000
+            w0 = cursor.strftime("%Y-%m-%d")
+            w1 = w0
+            cursor = cursor + timedelta(days=1)
         else:
-            # Older months: fetch month by month
+            # Fetch whole month at once
             if cursor.month == 12:
-                window_end = min(datetime(cursor.year + 1, 1, 1) - timedelta(days=1), end)
+                next_m = datetime(cursor.year + 1, 1, 1)
             else:
-                window_end = min(datetime(cursor.year, cursor.month + 1, 1) - timedelta(days=1), end)
-        w0 = cursor.strftime("%Y-%m-%d")
-        w1 = window_end.strftime("%Y-%m-%d")
+                next_m = datetime(cursor.year, cursor.month + 1, 1)
+            window_end = min(next_m - timedelta(days=1), end)
+            w0 = cursor.strftime("%Y-%m-%d")
+            w1 = window_end.strftime("%Y-%m-%d")
+            cursor = next_m
+
         try:
             records = fetch_bacen_window(w0, w1)
             all_records.extend(records)
         except Exception as e:
             print(f"  ERRO {w0}: {e}")
-        cursor = window_end + timedelta(days=1)
+
     print(f"  Total combinado: {len(all_records)} registros")
     return all_records
 
