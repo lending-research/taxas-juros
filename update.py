@@ -220,11 +220,14 @@ DATA_FILE = "data.json"
 
 # ── API ───────────────────────────────────────────────────────────────────────
 
-def fetch_bacen_window(data_inicio, data_fim):
-    """Busca dados sem filtro para uma janela de datas."""
+def fetch_bacen_window(data_inicio, data_fim, segmento_filter=None):
+    """Busca dados para uma janela de datas, ordenado por data desc para pegar os mais recentes primeiro."""
     base = "https://olinda.bcb.gov.br/olinda/servico/taxaJuros/versao/v2/odata/TaxasJurosDiariaPorInicioPeriodo"
-    url = f"{base}?$format=json&$top=10000&dataInicio={data_inicio}&dataFim={data_fim}"
-    print(f"  GET {data_inicio} → {data_fim}")
+    params = f"?$format=json&$top=10000&$orderby=InicioPeriodo%20desc&dataInicio={data_inicio}&dataFim={data_fim}"
+    if segmento_filter:
+        params += f"&$filter=Segmento%20eq%20%27{urllib.parse.quote(segmento_filter)}%27"
+    url = base + params
+    print(f"  GET {data_inicio} \u2192 {data_fim}{' ['+segmento_filter+']' if segmento_filter else ''}")
     req = urllib.request.Request(url, headers={"Accept": "application/json"})
     with urllib.request.urlopen(req, timeout=60) as resp:
         data = json.loads(resp.read().decode("utf-8"))
@@ -233,44 +236,27 @@ def fetch_bacen_window(data_inicio, data_fim):
     return records
 
 def fetch_bacen(data_inicio, data_fim):
-    """Busca em janelas mensais para evitar o limite de 10000 registros."""
+    """Busca em janelas de 7 dias para garantir que dados recentes nao sejam cortados pelo limite de 10000."""
     from datetime import datetime, timedelta
     all_records = []
-    # Break into monthly windows
     start = datetime.strptime(data_inicio, "%Y-%m-%d")
-    end = datetime.strptime(data_fim, "%Y-%m-%d")
+    end   = datetime.strptime(data_fim,   "%Y-%m-%d")
     cursor = start
     while cursor <= end:
-        window_end = min(
-            datetime(cursor.year, cursor.month + 1 if cursor.month < 12 else 1,
-                     1, tzinfo=None) - timedelta(days=1)
-            if cursor.month < 12
-            else datetime(cursor.year + 1, 1, 1) - timedelta(days=1),
-            end
-        )
+        window_end = min(cursor + timedelta(days=6), end)
+        w0 = cursor.strftime("%Y-%m-%d")
+        w1 = window_end.strftime("%Y-%m-%d")
         try:
-            records = fetch_bacen_window(
-                cursor.strftime("%Y-%m-%d"),
-                window_end.strftime("%Y-%m-%d")
-            )
+            records = fetch_bacen_window(w0, w1, segmento_filter="PESSOA F\u00cdSICA")
             all_records.extend(records)
+            if len(records) >= 10000:
+                print(f"  AVISO: limite atingido em {w0}\u2192{w1}")
         except Exception as e:
-            print(f"  ERRO janela {cursor.strftime('%Y-%m')}: {e}")
-        # Move to first day of next month
-        if cursor.month == 12:
-            cursor = datetime(cursor.year + 1, 1, 1)
-        else:
-            cursor = datetime(cursor.year, cursor.month + 1, 1)
+            print(f"  ERRO {w0}: {e}")
+        cursor = window_end + timedelta(days=1)
     print(f"  Total combinado: {len(all_records)} registros")
     return all_records
 
-def get_inst_map(modkey):
-    m = dict(BASE_INST)
-    if modkey == "inss":
-        m.update(INSS_EXTRA)
-    elif modkey == "privado":
-        m.update(PRIVADO_EXTRA)
-    return m
 
 def build_series(records, modkey):
     modalidade_str = MODALIDADES[modkey]
